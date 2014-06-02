@@ -5,13 +5,18 @@ import collections
 #: Epoch for simpleflake timestamps, starts at the year 2000
 SIMPLEFLAKE_EPOCH = 946702800
 
-#field lengths in bits
+# field lengths in bits
 SIMPLEFLAKE_TIMESTAMP_LENGTH = 41
-SIMPLEFLAKE_RANDOM_LENGTH = 23
+SIMPLEFLAKE_RANDOM_LENGTH = (64 - SIMPLEFLAKE_TIMESTAMP_LENGTH)
 
-#left shift amounts
+# left shift amounts
 SIMPLEFLAKE_RANDOM_SHIFT = 0
-SIMPLEFLAKE_TIMESTAMP_SHIFT = 23
+SIMPLEFLAKE_TIMESTAMP_SHIFT = SIMPLEFLAKE_RANDOM_LENGTH
+
+# consistent hashing
+SIMPLEFLAKE_CONSISTENT_HASH_LENGTH = 12  # low-order bits of SIMPLEFLAKE_RANDOM_LENGTH
+SIMPLEFLAKE_CONSISTENT_HASH_MASK = ((1 << SIMPLEFLAKE_CONSISTENT_HASH_LENGTH) - 1)
+
 
 simpleflake_struct = collections.namedtuple("SimpleFlake",
                                             ["timestamp", "random_bits"])
@@ -60,3 +65,14 @@ def parse_simpleflake(flake):
                           SIMPLEFLAKE_RANDOM_SHIFT,
                           SIMPLEFLAKE_RANDOM_LENGTH)
     return simpleflake_struct(timestamp, random)
+
+def consistent_hash_id(flake):
+    """Extract a consistent-hash id from `flake`."""
+    return (flake & SIMPLEFLAKE_CONSISTENT_HASH_MASK)
+
+def consistentflake(flake):
+    """Generate a new simpleflake with same consistent-hash id as `flake`."""
+    new_flake = simpleflake()
+    new_flake &= ~SIMPLEFLAKE_CONSISTENT_HASH_MASK
+    new_flake |= consistent_hash_id(flake)
+    return new_flake

@@ -1,4 +1,7 @@
+#!/usr/bin/env python
+
 import random
+import time
 import unittest
 
 import simpleflake as sf
@@ -36,3 +39,18 @@ class SimpleFlakeTest(unittest.TestCase):
         parts = sf.parse_simpleflake(flake)
         self.assertEquals(coolstamp, parts.timestamp)
         self.assertEquals(random_bits, parts.random_bits)
+
+    def test_consistentflake(self):
+        flake = sf.simpleflake()
+        chi = sf.consistent_hash_id(flake)
+        old_flake = flake
+        for i in range(100):
+            new_flake = sf.consistentflake(flake)
+            self.assertEqual(chi, sf.consistent_hash_id(new_flake))
+            self.assertNotEqual(old_flake, new_flake, "%4d: %x" % (i, new_flake))
+            time.sleep(2.0e-4)
+            old_flake = new_flake
+
+
+if __name__ == '__main__':
+    unittest.main()
