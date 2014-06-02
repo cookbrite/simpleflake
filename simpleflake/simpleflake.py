@@ -44,12 +44,9 @@ def simpleflake(timestamp=None, random_bits=None, epoch=SIMPLEFLAKE_EPOCH):
     second_time = timestamp if timestamp is not None else time.time()
     second_time -= epoch
     millisecond_time = int(second_time * 1000)
-
-    randomness = random.SystemRandom().getrandbits(SIMPLEFLAKE_RANDOM_LENGTH)
-    randomness = random_bits if random_bits is not None else randomness
-
+    randomness = (random_bits if random_bits is not None
+                  else random.SystemRandom().getrandbits(SIMPLEFLAKE_RANDOM_LENGTH))
     flake = (millisecond_time << SIMPLEFLAKE_TIMESTAMP_SHIFT) + randomness
-
     return flake
 
 
